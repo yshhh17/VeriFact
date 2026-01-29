@@ -94,7 +94,7 @@ app.use((err, req, res, next) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        message: 'File too large. Maximum size is 100MB.',
+        message: 'File too large.Maximum size is 100MB.',
       });
     }
     return res.status(400).json({
@@ -167,6 +167,6 @@ process.on('unhandledRejection', (err) => {
 
 // Handle SIGTERM
 process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received. Shutting down gracefully...');
+  console.log('👋 SIGTERM received.Shutting down gracefully...');
   process.exit(0);
 });

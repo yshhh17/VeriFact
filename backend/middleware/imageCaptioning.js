@@ -10,8 +10,8 @@ export const generateImageCaption = async (req, res, next) => {
       const base64Image = imageBuffer.toString('base64');
       
       // Using Hugging Face's BLIP image captioning model (free)
-      const response = await axios. post(
-        'https://api-inference.huggingface. co/models/Salesforce/blip-image-captioning-large',
+      const response = await axios.post(
+        'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large',
         { inputs: base64Image },
         {
           headers: {

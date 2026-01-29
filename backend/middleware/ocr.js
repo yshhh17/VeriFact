@@ -1,10 +1,10 @@
-import Tesseract from 'tesseract. js';
+import Tesseract from 'tesseract.js';
 
 export const extractTextFromImage = async (req, res, next) => {
   try {
     // Only process if file is an image
     if (req.file && req.file.mimetype.startsWith('image/')) {
-      console.log('📸 Extracting text from image.. .');
+      console.log('📸 Extracting text from image...');
       
       const { data:  { text } } = await Tesseract.recognize(
         req.file.path,

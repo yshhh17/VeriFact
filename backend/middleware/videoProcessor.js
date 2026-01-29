@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 export const extractFrames = async (req, res, next) => {
   try {
     if (req.file && req.file.mimetype.startsWith('video/')) {
-      console.log('🎬 Extracting frames from video.. .');
+      console.log('🎬 Extracting frames from video...');
       
       const framesDir = path.join('uploads', 'frames', Date.now().toString());
       

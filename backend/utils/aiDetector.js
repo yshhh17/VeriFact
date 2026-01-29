@@ -3,12 +3,11 @@ import fs from 'fs';
 
 const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
 
-// Text AI Detection
 export const detectAIText = async (text) => {
   try {
     console.log('🔍 Detecting AI in text...');
     
-    // Using roberta-base-openai-detector model (free)
+    
     const response = await axios.post(
       'https://api-inference.huggingface.co/models/roberta-base-openai-detector',
       { inputs: text },
@@ -20,10 +19,8 @@ export const detectAIText = async (text) => {
       }
     );
 
-    // Response format: [{ label: 'LABEL_0' (human) or 'LABEL_1' (AI), score: 0.95 }]
     const result = response.data[0];
     
-    // Find the AI-generated score
     const aiResult = result.find(r => r.label === 'LABEL_1' || r.label === 'Fake' || r.label === 'LABEL_0');
     const isAIGenerated = aiResult?.label === 'LABEL_1' || aiResult?.label === 'Fake';
     const confidence = (aiResult?.score || 0.5) * 100;
@@ -64,7 +61,6 @@ export const detectAIImage = async (imagePath) => {
       }
     );
 
-    // Response format: [{ label: 'artificial' or 'human', score: 0.95 }]
     const result = response.data;
     
     const aiResult = result.find(r => r.label.toLowerCase().includes('artificial') || r.label.toLowerCase().includes('ai'));
@@ -85,7 +81,6 @@ export const detectAIImage = async (imagePath) => {
   } catch (error) {
     console.error('❌ AI Image Detection Error:', error.response?.data || error.message);
     
-    // Fallback
     return {
       isAIGenerated:  false,
       confidence: 50,
@@ -196,7 +191,6 @@ const fallbackTextDetection = (text) => {
   };
 };
 
-// Helper function to get confidence level
 export const getConfidenceLevel = (confidence) => {
   if (confidence >= 90) return 'Very High';
   if (confidence >= 75) return 'High';
