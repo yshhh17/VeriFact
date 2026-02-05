@@ -1,8 +1,6 @@
 import express from 'express';
 import {
   register,
-  verifyEmail,
-  resendOTP,
   login,
   getMe,
   logout,
@@ -13,8 +11,6 @@ const router = express.Router();
 
 // Public routes
 router.post('/register', register);
-router.post('/verify-email', verifyEmail);
-router.post('/resend-otp', resendOTP);
 router.post('/login', login);
 
 // Protected routes (require authentication)

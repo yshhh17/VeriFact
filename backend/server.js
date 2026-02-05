@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
-import redis from './config/redis.js';
 import authRoutes from './routes/authRoutes.js';
 import detectionRoutes from './routes/detectionRoutes.js';
 import path from 'path';
@@ -22,11 +21,6 @@ const app = express();
 
 // Connect to MongoDB
 connectDB();
-
-// Test Redis connection (already connected in config/redis.js)
-redis.on('ready', () => {
-  console.log('✅ Redis is ready');
-});
 
 // Middleware
 app.use(cors({
@@ -59,7 +53,6 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       mongodb: 'connected',
-      redis: redis.status === 'ready' ? 'connected' : 'disconnected',
     },
   });
 });
