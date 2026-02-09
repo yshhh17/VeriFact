@@ -4,14 +4,12 @@ import { performFactCheck, generateFactCheckMessage } from '../utils/factChecker
 import fs from 'fs';
 import path from 'path';
 
-// Helper to generate final verdict
 const generateFinalVerdict = (aiDetection, factCheck) => {
   const { isAIGenerated, confidence:  aiConfidence } = aiDetection;
   const { overallVerdict:  factVerdict, confidence: factConfidence } = factCheck;
 
   let category, riskLevel, explanation;
 
-  // Determine category
   if (! isAIGenerated && factVerdict === 'verified') {
     category = 'trusted';
     riskLevel = 'low';
@@ -53,7 +51,6 @@ export const detectText = async (req, res) => {
 
     console.log('🔍 Starting text detection...');
 
-    // 1.AI Detection
     const aiResult = await detectAIText(text);
 
     // 2.Extract claims
@@ -62,13 +59,11 @@ export const detectText = async (req, res) => {
     // 3.Fact-check
     const factCheckResult = await performFactCheck(claims, text);
 
-    // 4.Generate final verdict
     const finalVerdict = generateFinalVerdict(
       { isAIGenerated: aiResult.isAIGenerated, confidence: aiResult.confidence },
       factCheckResult
     );
 
-    // 5.Save to database
     const detection = await Detection.create({
       user: req.user._id,
       contentType: 'text',
@@ -162,7 +157,6 @@ export const detectImage = async (req, res) => {
     const combinedText = `${extractedText} ${imageCaption}`;
     const { claims } = extractClaims(combinedText);
 
-    // 5.Fact-check
     const factCheckResult = await performFactCheck(claims, combinedText);
 
     // 6.Generate final verdict
