@@ -4,7 +4,7 @@ import fs from 'fs';
 export const generateImageCaption = async (req, res, next) => {
   try {
     if (req.file && req.file.mimetype.startsWith('image/')) {
-      console.log('🖼️ Generating image caption...');
+      console.log('Generating image caption...');
       
       const imageBuffer = fs.readFileSync(req.file.path);
       const base64Image = imageBuffer.toString('base64');
@@ -22,12 +22,12 @@ export const generateImageCaption = async (req, res, next) => {
       );
       
       req.imageCaption = response.data[0]?.generated_text || '';
-      console.log('✅ Image caption:', req.imageCaption);
+      console.log('Image caption:', req.imageCaption);
     }
     
     next();
   } catch (error) {
-    console.error('❌ Image captioning error:', error);
+    console.error('Image captioning error:', error);
     req.imageCaption = '';
     next();
   }

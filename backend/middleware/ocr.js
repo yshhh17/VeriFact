@@ -4,7 +4,7 @@ export const extractTextFromImage = async (req, res, next) => {
   try {
     // Only process if file is an image
     if (req.file && req.file.mimetype.startsWith('image/')) {
-      console.log('📸 Extracting text from image...');
+      console.log('Extracting text from image...');
       
       const { data:  { text } } = await Tesseract.recognize(
         req.file.path,
@@ -16,12 +16,12 @@ export const extractTextFromImage = async (req, res, next) => {
       
       // Attach extracted text to request
       req.extractedText = text.trim();
-      console.log('✅ Text extracted:', req.extractedText);
+      console.log('Text extracted:', req.extractedText);
     }
     
     next();
   } catch (error) {
-    console.error('❌ OCR Error:', error);
+    console.error('OCR Error:', error);
     // Don't fail the request, just continue without extracted text
     req.extractedText = '';
     next();

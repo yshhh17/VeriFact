@@ -35,7 +35,7 @@ app.use(cookieParser());
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('📁 Created uploads directory');
+  console.log('Created uploads directory');
 }
 
 // Serve uploaded files statically
@@ -49,7 +49,7 @@ app.use('/api/detect', detectionRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'VeriFact API is running! 🚀',
+    message: 'VeriFact API is running!',
     timestamp: new Date().toISOString(),
     services: {
       mongodb: 'connected',
@@ -80,7 +80,7 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err);
+  console.error('Error:', err);
 
   // Multer errors
   if (err.name === 'MulterError') {
@@ -111,7 +111,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
@@ -129,7 +128,7 @@ app.use((err, req, res, next) => {
   // Default error
   res.status(err.statusCode || 500).json({
     success: false,
-    message: err.message || 'Server Error',
+    message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
@@ -138,28 +137,19 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`
-╔═══════════════════════════════════════╗
-║                                       ║
-║   🚀 VeriFact API Server Started     ║
-║                                       ║
-║   📡 Port: ${PORT}                     ║
-║   🌍 Environment: ${process.env.NODE_ENV || 'development'}    ║
-║   📁 Uploads: ${uploadsDir}           ║
-║                                       ║
-╚═══════════════════════════════════════╝
+  console.log(`Server running on port ${PORT}
   `);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err);
+  console.error('Unhandled Rejection:', err);
   // Close server & exit
   process.exit(1);
 });
 
 // Handle SIGTERM
 process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received.Shutting down gracefully...');
+  console.log('SIGTERM received.Shutting down gracefully...');
   process.exit(0);
 });
