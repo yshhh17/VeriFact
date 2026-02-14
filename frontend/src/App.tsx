@@ -39,7 +39,6 @@ function App() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section id="features" className="features">
         <h2 className="section-title">Powerful Detection Capabilities</h2>
