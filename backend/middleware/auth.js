@@ -33,14 +33,6 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Check if user is verified
-    if (!req.user.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: 'Please verify your email first',
-      });
-    }
-
     next();
   } catch (error) {
     return res.status(401).json({
