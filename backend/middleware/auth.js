@@ -1,5 +1,4 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import { supabaseAdmin } from '../config/db.js';
 
 export const protect = async (req, res, next) => {
   let token;
@@ -20,21 +19,26 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify Supabase JWT token
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
 
-    // Get user from token
-    req.user = await User.findById(decoded.id);
-
-    if (!req.user) {
+    if (error || !user) {
       return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: 'Invalid or expired token',
       });
     }
 
+    // Attach user to request
+    req.user = {
+      id: user.id,
+      email: user.email,
+      ...user.user_metadata
+    };
+
     next();
   } catch (error) {
+    console.error('❌ Auth Middleware Error:', error);
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',

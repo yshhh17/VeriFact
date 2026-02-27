@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import connectDB from './config/db.js';
+import testConnection from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import detectionRoutes from './routes/detectionRoutes.js';
 import path from 'path';
@@ -19,12 +19,12 @@ const __dirname = path.dirname(__filename);
 // Initialize express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Test Supabase connection
+testConnection();
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(express.json());
@@ -52,7 +52,8 @@ app.get('/api/health', (req, res) => {
     message: 'VeriFact API is running!',
     timestamp: new Date().toISOString(),
     services: {
-      mongodb: 'connected',
+      supabase: 'connected',
+      database: 'PostgreSQL',
     },
   });
 });
@@ -96,21 +97,29 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // MongoDB errors
-  if (err.name === 'ValidationError') {
+  // Supabase/PostgreSQL errors
+  if (err.code === '23505') { // Unique violation
     return res.status(400).json({
       success: false,
-      message: Object.values(err.errors).map(e => e.message).join(', '),
+      message: 'Duplicate entry. This record already exists.',
     });
   }
 
-  if (err.code === 11000) {
+  if (err.code === '23503') { // Foreign key violation
     return res.status(400).json({
       success: false,
-      message: 'Duplicate field value entered',
+      message: 'Referenced record does not exist.',
     });
   }
 
+  if (err.code === '23502') { // Not null violation
+    return res.status(400).json({
+      success: false,
+      message: 'Required field is missing.',
+    });
+  }
+
+  // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
