@@ -1,19 +1,16 @@
 import express from 'express';
 import {
-  register,
-  login,
   getMe,
-  logout,
+  updateProfile,
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
+// All routes are protected - auth is handled by frontend with Supabase
+// Backend only verifies JWT tokens and provides user data
 
-// Protected routes (require authentication)
 router.get('/me', protect, getMe);
-router.post('/logout', protect, logout);
+router.put('/profile', protect, updateProfile);
 
 export default router;
