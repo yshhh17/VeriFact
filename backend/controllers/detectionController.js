@@ -1,6 +1,7 @@
-import Detection from '../models/Detection.js';
+import { supabaseAdmin } from '../config/db.js';
 import { detectAIText, detectAIImage, detectAIVideo, getConfidenceLevel, getVerdict } from '../utils/aiDetector.js';
 import { performFactCheck, generateFactCheckMessage } from '../utils/factChecker.js';
+import { extractClaims } from '../utils/clainExtractor.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -64,30 +65,39 @@ export const detectText = async (req, res) => {
       factCheckResult
     );
 
-    const detection = await Detection.create({
-      user: req.user._id,
-      contentType: 'text',
-      content: text,
-      aiDetection: {
-        isAIGenerated: aiResult.isAIGenerated,
-        confidence: aiResult.confidence,
-        verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
-        confidenceLevel: getConfidenceLevel(aiResult.confidence),
-        details: aiResult,
-      },
-      factCheck:  {
-        isFake: factCheckResult.overallVerdict === 'unverifiable' || factCheckResult.overallVerdict === 'uncertain',
-        confidence: factCheckResult.confidence,
-        verdict: factCheckResult.overallVerdict,
-        claimsDetected: claims,
-        verifiedFacts: factCheckResult.verified,
-        sources: factCheckResult.sources,
-      },
-      extractedData:  {
-        text: text,
-      },
-      finalVerdict,
-    });
+    // Save to Supabase database
+    const { data: detection, error: dbError } = await supabaseAdmin
+      .from('detections')
+      .insert({
+        user_id: req.user.id,
+        content_type: 'text',
+        content: text,
+        ai_detection: {
+          isAIGenerated: aiResult.isAIGenerated,
+          confidence: aiResult.confidence,
+          verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
+          confidenceLevel: getConfidenceLevel(aiResult.confidence),
+          details: aiResult,
+        },
+        fact_check: {
+          isFake: factCheckResult.overallVerdict === 'unverifiable' || factCheckResult.overallVerdict === 'uncertain',
+          confidence: factCheckResult.confidence,
+          verdict: factCheckResult.overallVerdict,
+          claimsDetected: claims,
+          verifiedFacts: factCheckResult.verified,
+          sources: factCheckResult.sources,
+        },
+        extracted_data: {
+          text: text,
+        },
+        final_verdict: finalVerdict,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      throw dbError;
+    }
 
     // 6.Generate user-friendly messages
     const aiMessage = `${getVerdict(aiResult.isAIGenerated, aiResult.confidence)} (${aiResult.confidence}% confidence)`;
@@ -96,7 +106,7 @@ export const detectText = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        detectionId: detection._id,
+        detectionId: detection.id,
         contentType: 'text',
         aiDetection: {
           verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
@@ -115,7 +125,7 @@ export const detectText = async (req, res) => {
           message: factMessage,
         },
         finalVerdict,
-        timestamp: detection.createdAt,
+        timestamp: detection.created_at,
       },
     });
   } catch (error) {
@@ -165,32 +175,40 @@ export const detectImage = async (req, res) => {
       factCheckResult
     );
 
-    // 7.Save to database
-    const detection = await Detection.create({
-      user: req.user._id,
-      contentType: 'image',
-      filePath: imagePath,
-      aiDetection: {
-        isAIGenerated: aiResult.isAIGenerated,
-        confidence: aiResult.confidence,
-        verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
-        confidenceLevel: getConfidenceLevel(aiResult.confidence),
-        details: aiResult,
-      },
-      factCheck: {
-        isFake: factCheckResult.overallVerdict === 'unverifiable' || factCheckResult.overallVerdict === 'uncertain',
-        confidence: factCheckResult.confidence,
-        verdict: factCheckResult.overallVerdict,
-        claimsDetected: claims,
-        verifiedFacts:  factCheckResult.verified,
-        sources: factCheckResult.sources,
-      },
-      extractedData: {
-        text: extractedText,
-        imageCaption:  imageCaption,
-      },
-      finalVerdict,
-    });
+    // 7.Save to Supabase database
+    const { data: detection, error: dbError } = await supabaseAdmin
+      .from('detections')
+      .insert({
+        user_id: req.user.id,
+        content_type: 'image',
+        file_path: imagePath,
+        ai_detection: {
+          isAIGenerated: aiResult.isAIGenerated,
+          confidence: aiResult.confidence,
+          verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
+          confidenceLevel: getConfidenceLevel(aiResult.confidence),
+          details: aiResult,
+        },
+        fact_check: {
+          isFake: factCheckResult.overallVerdict === 'unverifiable' || factCheckResult.overallVerdict === 'uncertain',
+          confidence: factCheckResult.confidence,
+          verdict: factCheckResult.overallVerdict,
+          claimsDetected: claims,
+          verifiedFacts: factCheckResult.verified,
+          sources: factCheckResult.sources,
+        },
+        extracted_data: {
+          text: extractedText,
+          imageCaption: imageCaption,
+        },
+        final_verdict: finalVerdict,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      throw dbError;
+    }
 
     const aiMessage = `${getVerdict(aiResult.isAIGenerated, aiResult.confidence)} (${aiResult.confidence}% confidence)`;
     const factMessage = generateFactCheckMessage(factCheckResult, claims);
@@ -198,7 +216,7 @@ export const detectImage = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        detectionId: detection._id,
+        detectionId: detection.id,
         contentType: 'image',
         filePath: imagePath,
         aiDetection: {
@@ -221,7 +239,7 @@ export const detectImage = async (req, res) => {
           message: factMessage,
         },
         finalVerdict,
-        timestamp: detection.createdAt,
+        timestamp: detection.created_at,
       },
     });
   } catch (error) {
@@ -269,31 +287,39 @@ export const detectVideo = async (req, res) => {
       factCheckResult
     );
 
-    // 6.Save to database
-    const detection = await Detection.create({
-      user: req.user._id,
-      contentType: 'video',
-      filePath: videoPath,
-      aiDetection: {
-        isAIGenerated: aiResult.isAIGenerated,
-        confidence: aiResult.confidence,
-        verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
-        confidenceLevel: getConfidenceLevel(aiResult.confidence),
-        details: aiResult,
-      },
-      factCheck: {
-        isFake: factCheckResult.overallVerdict === 'unverifiable',
-        confidence: factCheckResult.confidence,
-        verdict: factCheckResult.overallVerdict,
-        claimsDetected: claims,
-        verifiedFacts:  factCheckResult.verified,
-        sources: factCheckResult.sources,
-      },
-      extractedData: {
-        audioTranscript: audioTranscript,
-      },
-      finalVerdict,
-    });
+    // 6.Save to Supabase database
+    const { data: detection, error: dbError } = await supabaseAdmin
+      .from('detections')
+      .insert({
+        user_id: req.user.id,
+        content_type: 'video',
+        file_path: videoPath,
+        ai_detection: {
+          isAIGenerated: aiResult.isAIGenerated,
+          confidence: aiResult.confidence,
+          verdict: getVerdict(aiResult.isAIGenerated, aiResult.confidence),
+          confidenceLevel: getConfidenceLevel(aiResult.confidence),
+          details: aiResult,
+        },
+        fact_check: {
+          isFake: factCheckResult.overallVerdict === 'unverifiable',
+          confidence: factCheckResult.confidence,
+          verdict: factCheckResult.overallVerdict,
+          claimsDetected: claims,
+          verifiedFacts: factCheckResult.verified,
+          sources: factCheckResult.sources,
+        },
+        extracted_data: {
+          audioTranscript: audioTranscript,
+        },
+        final_verdict: finalVerdict,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      throw dbError;
+    }
 
     // 7.Clean up extracted frames
     if (req.framesDir && fs.existsSync(req.framesDir)) {
@@ -306,7 +332,7 @@ export const detectVideo = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        detectionId: detection._id,
+        detectionId: detection.id,
         contentType: 'video',
         filePath: videoPath,
         aiDetection:  {
@@ -325,7 +351,7 @@ export const detectVideo = async (req, res) => {
           message: factMessage,
         },
         finalVerdict,
-        timestamp: detection.createdAt,
+        timestamp: detection.created_at,
       },
     });
   } catch (error) {
@@ -345,15 +371,29 @@ export const getHistory = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const detections = await Detection.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .select('-__v');
+    // Get detections with pagination
+    const { data: detections, error } = await supabaseAdmin
+      .from('detections')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
-    const total = await Detection.countDocuments({ user: req.user._id });
+    if (error) {
+      throw error;
+    }
+
+    // Get total count
+    const { count, error: countError } = await supabaseAdmin
+      .from('detections')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', req.user.id);
+
+    if (countError) {
+      throw countError;
+    }
 
     res.status(200).json({
       success: true,
@@ -361,9 +401,9 @@ export const getHistory = async (req, res) => {
         detections,
         pagination: {
           currentPage: page,
-          totalPages: Math.ceil(total / limit),
-          totalDetections: total,
-          hasMore: page * limit < total,
+          totalPages: Math.ceil(count / limit),
+          totalDetections: count,
+          hasMore: page * limit < count,
         },
       },
     });
@@ -381,12 +421,14 @@ export const getHistory = async (req, res) => {
 // @access  Private
 export const getDetection = async (req, res) => {
   try {
-    const detection = await Detection.findOne({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    const { data: detection, error } = await supabaseAdmin
+      .from('detections')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
 
-    if (!detection) {
+    if (error || !detection) {
       return res.status(404).json({
         success: false,
         message: 'Detection not found',
@@ -411,12 +453,15 @@ export const getDetection = async (req, res) => {
 // @access  Private
 export const deleteDetection = async (req, res) => {
   try {
-    const detection = await Detection.findOne({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    // First get the detection to check file path
+    const { data: detection, error: fetchError } = await supabaseAdmin
+      .from('detections')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
 
-    if (!detection) {
+    if (fetchError || !detection) {
       return res.status(404).json({
         success: false,
         message: 'Detection not found',
@@ -424,11 +469,20 @@ export const deleteDetection = async (req, res) => {
     }
 
     // Delete associated file if exists
-    if (detection.filePath && fs.existsSync(detection.filePath)) {
-      fs.unlinkSync(detection.filePath);
+    if (detection.file_path && fs.existsSync(detection.file_path)) {
+      fs.unlinkSync(detection.file_path);
     }
 
-    await detection.deleteOne();
+    // Delete from database
+    const { error: deleteError } = await supabaseAdmin
+      .from('detections')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     res.status(200).json({
       success: true,
