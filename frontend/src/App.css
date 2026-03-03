@@ -85,6 +85,22 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.btn-outline {
+  background: transparent;
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}
+
 .btn-secondary {
   background: transparent;
   color: #667eea;
