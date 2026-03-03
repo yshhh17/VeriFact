@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import './App.css'
 
 function App() {
+  const navigate = useNavigate();
+
   return (
     <div className="app">
       {/* Navigation */}
@@ -13,7 +16,8 @@ function App() {
           <div className="nav-links">
             <a href="#features">Features</a>
             <a href="#about">About</a>
-            <button className="btn-primary">Get Started</button>
+            <button className="btn-outline" onClick={() => navigate('/auth')}>Log In</button>
+            <button className="btn-primary" onClick={() => navigate('/auth')}>Get Started</button>
           </div>
         </div>
       </nav>
@@ -28,8 +32,8 @@ function App() {
             Advanced AI-powered fact-checking and deepfake detection to help you distinguish truth from fiction
           </p>
           <div className="hero-buttons">
-            <button className="btn-large btn-primary">Start Verifying</button>
-            <button className="btn-large btn-secondary">Learn More</button>
+            <button className="btn-large btn-primary" onClick={() => navigate('/auth')}>Start Verifying</button>
+            <button className="btn-large btn-secondary" onClick={() => navigate('/auth')}>Learn More</button>
           </div>
         </div>
         <div className="hero-visual">
