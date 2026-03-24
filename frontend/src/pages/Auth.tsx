@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn, signUp } from '../lib/supabase';
+import { resendVerificationEmail, signIn, signUp } from '../lib/supabase';
 import AuthLogo from '../components/auth/AuthLogo';
 import AuthTabs, { type AuthMode } from '../components/auth/AuthTabs';
 import FormField from '../components/auth/FormField';
@@ -16,6 +16,7 @@ export default function Auth() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const switchMode = (next: AuthMode) => {
     setMode(next);
@@ -43,6 +44,32 @@ export default function Auth() {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email.trim()) {
+      setError('Enter your email address first to resend verification.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setResending(true);
+
+    try {
+      const { error } = await resendVerificationEmail(email);
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      setSuccess('Verification email sent. Please check your inbox and spam folder.');
+    } catch {
+      setError('Could not resend verification email. Please try again.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -88,6 +115,17 @@ export default function Auth() {
                 ? (isLogin ? 'Signing in...' : 'Creating account...')
                 : (isLogin ? 'Sign In' : 'Create Account')}
             </button>
+
+            {isLogin && (
+              <button
+                type="button"
+                className="auth-submit"
+                onClick={handleResendVerification}
+                disabled={resending || loading}
+              >
+                {resending ? 'Sending verification email...' : 'Resend Verification Email'}
+              </button>
+            )}
           </form>
 
           <p className="auth-switch">
