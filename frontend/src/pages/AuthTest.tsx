@@ -22,8 +22,8 @@ export default function AuthTest() {
     } else {
       setMessage('✅ Registration successful!');
       setUser(data.user);
-      setToken(data.session?.access_token || '');
-      console.log('Session:', data.session);
+      setToken(data?.session?.access_token || '');
+      console.log('Session:', data?.session);
     }
   };
 
@@ -35,9 +35,9 @@ export default function AuthTest() {
       setMessage(`❌ Error: ${error.message}`);
     } else {
       setMessage('✅ Login successful!');
-      setUser(data.user);
-      setToken(data.session?.access_token || '');
-      console.log('Session:', data.session);
+      setUser(data?.user ?? null);
+      setToken(data?.session?.access_token || '');
+      console.log('Session:', data?.session);
     }
   };
 

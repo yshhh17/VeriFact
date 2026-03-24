@@ -18,6 +18,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+const emailRedirectTo = import.meta.env.VITE_SUPABASE_EMAIL_REDIRECT_TO || `${window.location.origin}/auth`;
+
 // Helper functions for common auth operations
 
 /**
@@ -28,6 +30,7 @@ export const signUp = async (email: string, password: string, name: string) => {
     email,
     password,
     options: {
+      emailRedirectTo,
       data: {
         name: name,
       },
@@ -44,6 +47,28 @@ export const signIn = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+  });
+
+  if (!error && data?.user && !data.user.email_confirmed_at) {
+    await supabase.auth.signOut();
+    return {
+      data: null,
+      error: {
+        message: 'Please verify your email before signing in. You can resend the verification email below.',
+      },
+    };
+  }
+
+  return { data, error };
+};
+
+export const resendVerificationEmail = async (email: string) => {
+  const { data, error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo,
+    },
   });
 
   return { data, error };
@@ -85,7 +110,7 @@ export const onAuthStateChange = (callback: (event: string, session: any) => voi
  */
 export const resetPassword = async (email: string) => {
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: emailRedirectTo,
   });
   return { data, error };
 };

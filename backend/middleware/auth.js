@@ -29,6 +29,13 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    if (!user.email_confirmed_at) {
+      return res.status(403).json({
+        success: false,
+        message: 'Email is not verified. Please verify your email and sign in again.',
+      });
+    }
+
     // Attach user to request
     req.user = {
       id: user.id,
